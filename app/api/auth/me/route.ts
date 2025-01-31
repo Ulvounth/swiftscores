@@ -12,9 +12,9 @@ export async function GET() {
   }
 
   try {
-    jwt.verify(token, SECRET);
-    return NextResponse.json({ loggedIn: true });
+    const decoded = jwt.verify(token, SECRET);
+    return NextResponse.json({ loggedIn: true, user: decoded });
   } catch {
-    return NextResponse.json({ loggedIn: false }, { status: 200 }); // ✅ Also prevents 401
+    return NextResponse.json({ loggedIn: false }, { status: 200 });
   }
 }

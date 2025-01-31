@@ -10,14 +10,9 @@ const Header = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await fetch("/api/auth/me", { cache: "no-store" }); // ✅ Ensure fresh response
         const data = await res.json();
-
-        if (data.loggedIn) {
-          setIsLoggedIn(true);
-        } else {
-          setIsLoggedIn(false);
-        }
+        setIsLoggedIn(data.loggedIn);
       } catch (error) {
         console.error("Error checking auth:", error);
         setIsLoggedIn(false);
@@ -29,8 +24,8 @@ const Header = () => {
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
-    setIsLoggedIn(false);
-    window.location.reload(); // ✅ Refresh UI after logout
+    setIsLoggedIn(false); // ✅ Update state immediately
+    window.location.reload(); // ✅ Refresh UI to remove JWT
   };
 
   return (
@@ -41,7 +36,7 @@ const Header = () => {
 
           <div className="flex space-x-4">
             {isLoggedIn === null ? (
-              <p>Loading...</p>
+              <p>Loading...</p> // ✅ Prevents flicker
             ) : isLoggedIn ? (
               <button
                 onClick={handleLogout}
@@ -70,13 +65,7 @@ const Header = () => {
       </header>
 
       {modalType && (
-        <AuthModal
-          type={modalType}
-          onClose={() => {
-            setModalType(null);
-            setIsLoggedIn(true); // ✅ Update header immediately after login
-          }}
-        />
+        <AuthModal type={modalType} onClose={() => setModalType(null)} />
       )}
     </>
   );

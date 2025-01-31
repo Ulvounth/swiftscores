@@ -11,27 +11,42 @@ const AuthModal = ({ type, onClose }: AuthModalProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
     setError("");
+    setLoading(true);
+
     const endpoint =
       type === "login" ? "/api/auth/login" : "/api/auth/register";
 
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const data = await res.json();
-    if (!res.ok) return setError(data.error);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Something went wrong");
+      }
 
-    if (type === "login") {
-      onClose(); // ✅ Close modal immediately after login
-      window.location.reload(); // ✅ Refresh UI after login
-    } else {
-      alert("Registration successful! Please log in.");
-      onClose();
+      if (type === "login") {
+        onClose();
+        setTimeout(() => window.location.reload(), 500);
+      } else {
+        alert("Registration successful! Please log in.");
+        onClose();
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("An unexpected error occurred.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -61,9 +76,14 @@ const AuthModal = ({ type, onClose }: AuthModalProps) => {
 
         <button
           onClick={handleSubmit}
-          className="w-full bg-blue-500 text-white py-2 rounded"
+          className={`w-full py-2 rounded ${
+            loading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-500 text-white"
+          }`}
+          disabled={loading}
         >
-          {type === "login" ? "Login" : "Register"}
+          {loading ? "Processing..." : type === "login" ? "Login" : "Register"}
         </button>
 
         <button onClick={onClose} className="w-full mt-2 text-gray-500">

@@ -1,8 +1,6 @@
-"use client";
-
 import Image from "next/image";
-import { useEffect, useState } from "react";
 
+// ✅ Define TypeScript interface for match data
 interface Match {
   fixture: { id: number };
   teams: {
@@ -12,38 +10,13 @@ interface Match {
   goals: { home: number | null; away: number | null };
 }
 
-const LiveScores = () => {
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [favorites, setFavorites] = useState<number[]>(() => {
-    if (typeof window !== "undefined") {
-      return JSON.parse(localStorage.getItem("favorites") || "[]");
-    }
-    return [];
-  });
-
-  useEffect(() => {
-    const fetchMatches = async () => {
-      try {
-        const response = await fetch("/api/live-scores");
-        const data = await response.json();
-        setMatches(data);
-      } catch (error) {
-        console.error("Error fetching fixtures:", error);
-      }
-    };
-
-    fetchMatches();
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("favorites", JSON.stringify(favorites));
-  }, [favorites]);
-
-  const toggleFavorite = (id: number) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((fav) => fav !== id) : [...prev, id]
-    );
-  };
+const LiveScores = async () => {
+  // ✅ Fetch matches from API route (better for SSR)
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/live-scores`,
+    { cache: "no-store" }
+  );
+  const matches: Match[] = await res.json();
 
   return (
     <div className="w-full sm:max-w-3xl mx-auto p-4">
@@ -55,14 +28,8 @@ const LiveScores = () => {
         {matches.map((match) => (
           <div
             key={match.fixture.id}
-            className="bg-white shadow-md rounded-lg p-2 sm:p-3 grid grid-cols-4 items-center"
+            className="bg-white shadow-md rounded-lg p-2 sm:p-3 grid grid-cols-3 items-center"
           >
-            <input
-              type="checkbox"
-              checked={favorites.includes(match.fixture.id)}
-              onChange={() => toggleFavorite(match.fixture.id)}
-              className="w-5 h-5"
-            />
             <div className="flex items-center justify-start space-x-2">
               <Image
                 src={match.teams.home.logo}

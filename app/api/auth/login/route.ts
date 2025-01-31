@@ -19,18 +19,16 @@ export async function POST(req: Request) {
   if (!validPassword)
     return NextResponse.json({ error: "Invalid password" }, { status: 400 });
 
-  // ✅ Generate JWT Token
   const token = jwt.sign({ email, userId: user._id }, SECRET, {
     expiresIn: "1h",
   });
 
-  // ✅ Store JWT in a secure HTTP-only cookie
-  (
-    await // ✅ Store JWT in a secure HTTP-only cookie
-    cookies()
-  ).set("token", token, {
+  // ✅ Securely store JWT in HTTP-only, SameSite=Strict cookies
+  const cookieStore = await cookies();
+  cookieStore.set("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
+    sameSite: "strict", // 🛑 Prevents CSRF attacks
     maxAge: 60 * 60, // 1 hour
   });
 
